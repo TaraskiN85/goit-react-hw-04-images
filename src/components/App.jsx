@@ -80,7 +80,6 @@ export class App extends Component {
   }
   
   render() {
-
     const { images, isLoading, error, imageData, isImageChosen, canLoad } = this.state
     return (
       <div className={css.appcontainer}>
