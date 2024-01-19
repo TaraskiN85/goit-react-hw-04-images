@@ -41,7 +41,7 @@ export const App = () => {
 
           setIsLoading(false)
           setCanLoad(page < Math.ceil(searchedData.data.totalHits / 12))
-          setImages([...images, ...searchedImages])
+          setImages((prev) => [...prev, ...searchedImages])
         }
 
         fetchData()
@@ -55,7 +55,7 @@ export const App = () => {
 
 
   const handleLoadMore = () => {
-    setPage(() => page + 1)
+    setPage((page) => page + 1)
   }
 
   const openModal = (imageData) => {
