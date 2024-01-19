@@ -10,7 +10,7 @@ export const ImageGalleryItem = ({ galleryItemData, openModal }) => {
   
   return (
     <StyledItem >
-        <Img alt={tags} src={webformatURL} onClick={chooseImage}/>
+      <Img alt={tags} src={webformatURL} onClick={chooseImage}/>
     </StyledItem>
   )
 }

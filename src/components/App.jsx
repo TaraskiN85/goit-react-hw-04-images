@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Searchbar } from './Searchbar/Searchbar';
@@ -11,86 +11,71 @@ import { fetchImages } from './services/api';
 
 import css from './App.module.css'
 
-export class App extends Component {
+export const App = () => {
+  const [images, setImages] = useState([])
+  const [page, setPage] = useState(1)
+  const [keyword, setKeyword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [canLoad, setCanLoad] = useState(false)
+  const [error, setError] = useState('')
+  const [isImageChosen, setIsImageChosen] = useState(false)
+  const [imageData, setImageData] = useState({})
 
-  state = {
-    images: [],
-    page: 1,
-    keyword: '',
-    isLoading: false,
-    canLoad: false,
-    error: '',
-    isImageChosen: false,
-    imageData: {},
-  }
-
-  handleSearch = async (keyword) => {
-
-    this.setState(() => {
-      return {
-        keyword,
-        page: 1,
-        images: [],
-      }
-    })
+  const handleSearch = async (keyword) => {
+    setKeyword(keyword)
+    setPage(1)
+    setImages([])
   }  
 
-  componentDidUpdate = async (prevProps, prevState) => {
-    const { page, keyword } = this.state
-
-    if (prevState.keyword !== keyword || prevState.page !== page) {
+  useEffect(() => {
+    if (keyword) {
       try {
-      this.setState({ isLoading: true, error: '' })
-      const searchedData = await fetchImages(keyword, page);
+        setIsLoading(true)
+        setError('')
+        const fetchData = async () => {
+          const searchedData = await fetchImages(keyword, page);
 
-      const searchedImages = searchedData.data.hits.map(image => {
-        return { id: image.id, largeImageURL: image.largeImageURL, webformatURL: image.webformatURL, tags: image.tags}
-      })
+          const searchedImages = searchedData.data.hits.map(image => {
+            return { id: image.id, largeImageURL: image.largeImageURL, webformatURL: image.webformatURL, tags: image.tags }
+          })
 
-      this.setState((prevState) => {
-        return {
-          isLoading: false,
-          canLoad: page < Math.ceil(searchedData.data.totalHits / 12),
-          images: [...prevState.images, ...searchedImages],
+          setIsLoading(false)
+          setCanLoad(page < Math.ceil(searchedData.data.totalHits / 12))
+          setImages([...images, ...searchedImages])
         }
-      })
-    } catch (error) {
-        this.setState({ error: error.message })
+
+        fetchData()
+      } catch (error) {
+        setError(error.message)
       } finally {
-        this.setState({ isLoading: false })
-    }}
+        setIsLoading(false)
+      }
+    }
+  }, [keyword,page])
+
+
+  const handleLoadMore = () => {
+    setPage(() => page + 1)
   }
 
-  handleLoadMore = () => {
-    this.setState((prevState) => ({ page: prevState.page + 1 }))
+  const openModal = (imageData) => {
+    setIsImageChosen(true)
+    setImageData(imageData)
   }
 
-  openModal = (imageData) => {
-    this.setState({ isImageChosen: true, imageData })
+  const unchooseImage = () => {
+    setIsImageChosen(false)
+    setImageData({})
   }
 
-  closeModal = () => {
-    this.setState({ isImageChosen: false, imageData: {} })
-  }
-
-  handleChooseImage = (imageData) => {
-    this.setState(() => { 
-      return {imageData}
-    })
-  }
-  
-  render() {
-    const { images, isLoading, error, imageData, isImageChosen, canLoad } = this.state
     return (
       <div className={css.appcontainer}>
-        <Searchbar handleSearch={this.handleSearch} />
-        {images.length > 0 && <ImageGallery galleryData={images} openModal={this.openModal} />}
+        <Searchbar handleSearch={handleSearch} />
+        {images.length > 0 && <ImageGallery galleryData={images} openModal={openModal} />}
         {isLoading && <Loader />}
         {error && <ErrorMessage error={error}/>}
-
-        {canLoad && <Button handleLoadMore={this.handleLoadMore} />}
-        {isImageChosen && <Modal imageData={imageData} closeModal={this.closeModal} />}
+        {canLoad && <Button handleLoadMore={handleLoadMore} />}
+        {isImageChosen && <Modal imageData={imageData} unchooseImage={unchooseImage} />}
       </div>
     );
-  }
 };
